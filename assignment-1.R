@@ -33,7 +33,25 @@ forbes_data <- read_csv(
   mutate(
     net_worth = as.double(net_worth),
     net_worth = net_worth * if_else(BM %in% c("B"), 1000000000, 1000000),
+    #net_worth = as.integer(net_worth),
     BM = NULL
   )  
   
-  
+
+# data_analysis_2 ---------------------------------------------------------
+# Note: this only works if forbes_data is in Environment
+forbes_data <- filter(
+  forbes_data,
+  net_worth >= 1000000000 
+)
+
+
+# data_analysis_3 ---------------------------------------------------------
+# Note: this only works if forbes_data is in Environment
+ggplot(data = forbes_data, mapping = aes(x = age, y = net_worth)) +
+  geom_point() +
+  geom_smooth(se = FALSE)
+
+ggplot(data = forbes_data, mapping = aes(x = age, y = log(net_worth))) +
+  geom_point() +
+  geom_smooth(se = FALSE)
