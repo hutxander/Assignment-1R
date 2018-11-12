@@ -77,40 +77,83 @@ country_statistics <- forbes_data_filtered %>%
     min(net_worth),
     max(net_worth) - min(net_worth)
   ) %>%
+  # Rename new columns
+  rename(
+    max_worth = "max(net_worth)",
+    min_worth = "min(net_worth)",
+    diff_worth = "max(net_worth) - min(net_worth)"
+  ) %>% 
   # Filter out countries with less than 6 observations
   filter(
     count >= 6
-  )
-
-# Per country, find difference between highest and lowest person on the list.
-
-
-# Sort by ascending order.
-
+  ) %>% 
+  # Sort by ascending difference
+  arrange(diff_worth)
 
 
 # data_analysis_5 ---------------------------------------------------------
-
-ggplot(data = forbes_data_filtered, mapping = aes(x = diff_country, y = count())) +
-  geom_bar()
-# Adjust labels of the countries!
+# ggplot with country_statistics from 4. Stat has to be changes from bin to use numeric y.
+# theme is used to adjust x-labels to vertical text.
+ggplot(data = country_statistics, mapping = aes(x = country, y = diff_worth)) +
+  geom_bar(stat = "identity") +
+  theme(axis.text.x = element_text(angle=90,hjust=1,vjust=0.5))
 
 # data_analysis_6 ---------------------------------------------------------
-
+# Essentially the same as 5, but added reorder for ascending difference.
+# Also, axis labels are adjusted.
+ggplot(data = country_statistics, mapping = aes(x = reorder(country, diff_worth), y = diff_worth)) +
+  geom_bar(stat = "identity") +
+  theme(axis.text.x = element_text(angle=90,hjust=1,vjust=0.5)) +
+  labs(x = "Country", y = "Difference Net Worth ($)")
 
 
 # data_analysis_7 ---------------------------------------------------------
 # I assume we have to go back to the original dataset - so I will work on with forbes_data from the end of data_analysis_1
-
-# If unique(forbes_data::rank = rows(forbes_data)) then no double ranks, else there are.
-# Which are double? make column 1:1578, then take that column minus the rank column.
-# Everywhere that we end up with something else than zero, the rank is double.
-# Specifically, the row before the one with value 1 is the rank that is held more than once.
+shared_ranks <- forbes_data %>%
+  # Group by rank
+  group_by(rank) %>%
+  # Make new data - observations per rank - if higher than 1 --> double rank
+  summarize(
+    count = n()
+  ) %>%
+  # Filter out ranks that occur only once
+  filter(
+    count >= 2
+  ) 
+# shared_ranks now includes the shared ranks and number of occurences.
 
 # data_analysis_8 ---------------------------------------------------------
-# The average is equal to the original rank +0.5 times the amount of people that keep this rank (not +0.5 for single person holding the rank).
-
+# The average is equal to the original rank +0.5 for everyone the rank is shared with.
+rank_types <- forbes_data %>%
+  # Group by rank
+  group_by(rank) %>%
+  # Make new data - observations per rank - if higher than 1 --> double rank
+  summarize(
+    count = n()
+  ) %>%
+  mutate(
+    count = count - 1,
+    count = count / 2,
+    count = count + rank
+  ) %>% 
+  rename(
+    original_rank = "rank"
+    average_rank = "count"
+  )
 
 # data_analysis_9 ---------------------------------------------------------
+# Again, I assume I should use the initial dataset. Therefore, I use forbes_data
 # Step 1: compute the sum of net_worth per country.
+country_worth <- forbes_data %>%
+  # Group by country
+  group_by(country) %>%
+  # Make new data - sum of net_worth per country
+  summarize(
+    sum(net_worth)
+  ) %>%
+  # Rename new column
+  rename(
+    country_worth = "sum(net_worth)"
+  ) 
+
 # Step 2: Plot this sum on the world map.
