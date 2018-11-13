@@ -148,18 +148,40 @@ rank_types <- left_join(x = forbes_data, y = shared_ranks, by = "rank") %>%
 
 
 # data_analysis_9 ---------------------------------------------------------
+# I did not manage to do this assignment perfectly, but below my best shot.
+# I decided not to use log values, and did not manage to get values displayed (so just size of bubbles).
+
 # Again, I assume I should use the initial dataset. Therefore, I use forbes_data
-# Step 1: compute the sum of net_worth per country.
-country_worth <- forbes_data %>%
+# Furthermore, rworldmap is used for the plot, countrycode to map countries to ISO3 codes.
+library(rworldmap)
+library(countrycode)
+
+log_country_worth <- forbes_data %>%
   # Group by country
   group_by(country) %>%
   # Make new data - sum of net_worth per country
   summarize(
-    sum(net_worth)
+    
+    # Note: here I do not follow the assignment. If the log is added, the plot becomes a lot worse.
+    # Therefore, I decided to take out the log (even though the naming suggests it is in there).
+    (sum(net_worth))
   ) %>%
   # Rename new column
   rename(
-    country_worth = "sum(net_worth)"
+    log_worth = "(sum(net_worth))"
+  ) %>%  
+  mutate(
+    # Change country list to ISO3 codes needed for rworldmap
+    country = countrycode(country, "country.name", "iso3c"),
+    # Manually overwritten French Polynesia, since it isn't in countrycode.
+    country = ifelse(is.na(country), "PYF", country)
   )
 
-# Step 2: Plot this sum on the world map.
+sPDF <- joinCountryData2Map(log_country_worth, joinCode = "ISO3", nameJoinColumn = "country")
+
+mapBubbles(sPDF,
+           nameZSize = "log_worth",
+           oceanCol = 'lightblue',
+           landCol = 'wheat'
+           )
+
