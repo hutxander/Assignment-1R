@@ -82,11 +82,11 @@ country_statistics <- forbes_data_filtered %>%
     max_worth = "max(net_worth)",
     min_worth = "min(net_worth)",
     diff_worth = "max(net_worth) - min(net_worth)"
-  ) %>% 
+  ) %>%
   # Filter out countries with less than 6 observations
   filter(
     count >= 6
-  ) %>% 
+  ) %>%
   # Sort by ascending difference
   arrange(diff_worth)
 
@@ -96,14 +96,14 @@ country_statistics <- forbes_data_filtered %>%
 # theme is used to adjust x-labels to vertical text.
 ggplot(data = country_statistics, mapping = aes(x = country, y = diff_worth)) +
   geom_bar(stat = "identity") +
-  theme(axis.text.x = element_text(angle=90,hjust=1,vjust=0.5))
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
 
 # data_analysis_6 ---------------------------------------------------------
 # Essentially the same as 5, but added reorder for ascending difference.
 # Also, axis labels are adjusted.
 ggplot(data = country_statistics, mapping = aes(x = reorder(country, diff_worth), y = diff_worth)) +
   geom_bar(stat = "identity") +
-  theme(axis.text.x = element_text(angle=90,hjust=1,vjust=0.5)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
   labs(x = "Country", y = "Difference Net Worth ($)")
 
 
@@ -119,27 +119,33 @@ shared_ranks <- forbes_data %>%
   # Filter out ranks that occur only once
   filter(
     count >= 2
-  ) 
+  )
 # shared_ranks now includes the shared ranks and number of occurences.
 
 # data_analysis_8 ---------------------------------------------------------
-# The average is equal to the original rank +0.5 for everyone the rank is shared with.
-rank_types <- forbes_data %>%
-  # Group by rank
-  group_by(rank) %>%
-  # Make new data - observations per rank - if higher than 1 --> double rank
-  summarize(
-    count = n()
+# Use the shared_ranks data made in 7 and the original forbes_data.
+# Join shared ranks based on rank to get a column with shared rank vales at the right place.
+rank_types <- left_join(x = forbes_data, y = shared_ranks, by = "rank") %>%
+  rename(
+    average_rank = "count",
+    original_rank = "rank"
+  ) %>%
+  # Delete all data we do not need by taking only the ranks in the selection
+  select(
+    original_rank,
+    average_rank
   ) %>%
   mutate(
-    count = count - 1,
-    count = count / 2,
-    count = count + rank
-  ) %>% 
-  rename(
-    original_rank = "rank"
-    average_rank = "count"
+    # The average is equal to the original rank +0.5 for everyone the rank is shared with.
+    # First compute the addition for shared ranks, then change NA to 0.
+    # From this, the column average_rank is equal to the addition that should be given to original_rank.
+    # Adding original_rank results in the average rank. 
+    average_rank = (average_rank - 1) / 2,
+    average_rank = ifelse(is.na(average_rank), 0, average_rank),
+    average_rank = average_rank + original_rank
   )
+# rank_types now contains the two rank types next to eachother.
+
 
 # data_analysis_9 ---------------------------------------------------------
 # Again, I assume I should use the initial dataset. Therefore, I use forbes_data
@@ -154,6 +160,6 @@ country_worth <- forbes_data %>%
   # Rename new column
   rename(
     country_worth = "sum(net_worth)"
-  ) 
+  )
 
 # Step 2: Plot this sum on the world map.
