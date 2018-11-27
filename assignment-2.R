@@ -70,26 +70,113 @@ get_jane_austen_data <- function(){
   assign("austen_text", austen_text, envir=.GlobalEnv)
   invisible()
 }
+get_jane_austen_data()
 
 #' Extract possible names
 #' 
 #' This function extracts all words that start with a capital letter.
 #' 
-#' @param data A data frame, textual
+#' @param data A data frame, textual. Must contain a 'text' column,
+#'   in this column the name search is done. Also must contain an 'id' column,
+#'   which is used in return to refer back to original data.
 #' @return A data frame with a row per extracted name and a column for the
 #'   name identifier, original data frame identifier, and the extracted name.
 extract_possible_names <- function(data){
+  # Start with empty matrix of names - initialization.
+  names <- matrix(nrow=0,ncol=2)   
+
+  for(i in 1:nrow(data)){
+    row <- data[i,] %>% select(text, id)
+    # Extract al words that start with a capital in a single row. Simplify to get matrix.
+    names_row <- str_extract_all(row[,1],'[A-Z]([a-zA-z])*', simplify = TRUE)
+    # Bind data id to the name.
+    names_row <- t(rbind(names_row, rep(as.numeric(row[,2]),ncol(names_row))))
+    # Add to previously found names.
+    names <- rbind(names, names_row)
+  }
+  # Change from chr to data frame and name columns
+  names <- as.data.frame(names)
+  colnames(names) <- c("name", "text_id")
+  #------------------------------------
   
+  # Provide a unique id for every name.
+  unique_names <- as.data.frame(unique(names[,1]))
+  unique_id <- as.data.frame(1:nrow(unique_names))
+  unique <- cbind(unique_names, unique_id)
+  colnames(unique) <- c("name", "id")
+  
+  # Add the third column to the return: unique id for each name.
+  names <- full_join(names, unique, by = c("name"))
+  
+  
+  
+  #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+  #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+  #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+  # Questions: Do I have to give the same unique id to ELLIOT and Elliot?
+  # Is it needed to change full uppercase words to lowercase except for first letter?
   
 }
+
+test <- extract_possible_names(austen_text[1:150,])
 
 
 # Question 3 ------------------------------------------------------------------------------------------------------
 
-# filter_names
-
+#' Filter names
+#' 
+#' This function filters out words that are not capitalized at least 75% of the time.
+#' 
+#' @param data A data frame of word frequencies.
+#' @return A data frame with words that are capitalized often enough.
+filter_names <- function(names){
+  # Load data frequency provided
+  freq <- read_rds("austen_word_freqs.Rds")
+  
+  # Make frequencies found based on question 2 data.
+  help_filter <- names %>% 
+    group_by(name) %>% 
+    summarize(capital_freq = count(n)) 
+  
+  # Add just computed frequencies and provided frequencies to the data frame,
+  #   then compute the proportion, if this is larger than 0.75: retain.
+  #   Finally, delete the columns added to come back to the same format as in 2.
+  filtered_names <- names %>% 
+    full_join(select(data = help_filter, name, capital_freq) , by = c("name")) %>% 
+    
+    #------------------ This has to be fixed: 
+    #------------------ Matches will not be perfect because of casing
+    
+    full_join(freq, by = c("name")) %>% 
+    mutate(capital_proportion = capital_freq / freq) %>% 
+    filter(capital_proportion >= 0.75) %>% 
+    mutate(
+      capital_proportion = NULL,
+      capital_freq = NULL,
+      freq = NULL
+    )
+}
 
 
 # Question 4 ------------------------------------------------------------------------------------------------------
 
-# count_names_per_book
+#' Count names per book
+#' 
+#' This function counts the unique and total name occurences per book.
+#'  
+#' @param data A textual data frame - the original input as in austen_text.
+#' @param filtered_names A textual data frame containing filtered (>75% capital) names.
+#' @return A data frame with columns book title, 
+#'   number of unique names, and total name occurences.
+count_names_per_book <- function(data, filtered_names){
+  
+  # Use the data to separate the filtered_names frame into unique books (third column)
+  # Within each book: sum filtered names and again add frequency of name and count these as well
+  
+  #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+  #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+  #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+  #Question: how should we count frequency of names? Should we use freq in the filtered dataset? 
+  #   Or use the frequencies provided/compute the freq from text including non-capitalized entries?
+  
+}
