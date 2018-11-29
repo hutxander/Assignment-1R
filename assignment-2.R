@@ -88,7 +88,7 @@ extract_possible_names <- function(data){
   for(i in 1:nrow(data)){
     row <- data[i,] %>% select(text, id)
     # Extract al words that start with a capital in a single row. Simplify to get matrix.
-    names_row <- str_extract_all(row[,1],'[A-Z]([a-zA-z])*', simplify = TRUE)
+    names_row <- tolower(str_extract_all(row[,1],'[A-Z]([a-zA-z])*', simplify = TRUE))
     # Bind data id to the name.
     names_row <- t(rbind(names_row, rep(as.numeric(row[,2]),ncol(names_row))))
     # Add to previously found names.
@@ -97,6 +97,7 @@ extract_possible_names <- function(data){
   # Change from chr to data frame and name columns
   names <- as.data.frame(names)
   colnames(names) <- c("name", "text_id")
+  #names <- mutate(name = tolower(name))
   #------------------------------------
   
   # Provide a unique id for every name.
@@ -106,19 +107,11 @@ extract_possible_names <- function(data){
   colnames(unique) <- c("name", "id")
   
   # Add the third column to the return: unique id for each name.
-  names <- full_join(names, unique, by = c("name"))
-  
-  
-  
-  #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-  #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-  #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-  # Questions: Do I have to give the same unique id to ELLIOT and Elliot?
-  # Is it needed to change full uppercase words to lowercase except for first letter?
-  
+  names <- left_join(names, unique, by = c("name"))
 }
 
-test <- extract_possible_names(austen_text[1:150,])
+#rm(test)
+test <- extract_possible_names(austen_text[16:30,])
 
 
 # Question 3 ------------------------------------------------------------------------------------------------------
@@ -132,6 +125,7 @@ test <- extract_possible_names(austen_text[1:150,])
 filter_names <- function(names){
   # Load data frequency provided
   freq <- read_rds("austen_word_freqs.Rds")
+  test_freq <- head(freq, 50)
   
   # Make frequencies found based on question 2 data.
   help_filter <- names %>% 
@@ -142,12 +136,8 @@ filter_names <- function(names){
   #   then compute the proportion, if this is larger than 0.75: retain.
   #   Finally, delete the columns added to come back to the same format as in 2.
   filtered_names <- names %>% 
-    full_join(select(data = help_filter, name, capital_freq) , by = c("name")) %>% 
-    
-    #------------------ This has to be fixed: 
-    #------------------ Matches will not be perfect because of casing
-    
-    full_join(freq, by = c("name")) %>% 
+    left_join(select(data = help_filter, name, capital_freq) , by = c("name")) %>% 
+    left_join(freq, by = c("name" = "word")) %>% 
     mutate(capital_proportion = capital_freq / freq) %>% 
     filter(capital_proportion >= 0.75) %>% 
     mutate(
@@ -157,6 +147,7 @@ filter_names <- function(names){
     )
 }
 
+#test_filter <- filter_names(test)
 
 # Question 4 ------------------------------------------------------------------------------------------------------
 
@@ -172,6 +163,24 @@ count_names_per_book <- function(data, filtered_names){
   
   # Use the data to separate the filtered_names frame into unique books (third column)
   # Within each book: sum filtered names and again add frequency of name and count these as well
+  rm(book_specific)
+  book_specific <- austen_text %>% 
+    group_by(title) %>% 
+    summarize(max_id = max(id)) %>% 
+    arrange(max_id)
+
+  data_needed <- austen_text %>% select(id, title)
+  test[,2] <-  as.integer(levels(test[,2]))[test[,2]]
+  test_specifics <- left_join(test, austen_text %>% select(id, title),
+                              by = c("text_id" = "id"))
+  
+  test_specific2 <- test_specifics %>% 
+    group_by(title) %>% 
+    summarize(
+      unique_names = ncol(as.data.frame(unique(name))),
+      name_occurrences = count(name)
+    )
+    
   
   #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
   #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
