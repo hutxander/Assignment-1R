@@ -90,7 +90,7 @@ extract_possible_names <- function(data){
     row <- data[i,] %>% select(text, id)
     
     # Extract al words that start with a capital in a single row. Simplify to get matrix.
-    name_list[[i]] <- tolower(str_extract_all(row[,1],'[A-Z]([a-zA-z])*', simplify = TRUE))
+    name_list[[i]] <- tolower(str_extract_all(row[,1],'[A-Z]([[:alpha:]]*)', simplify = TRUE))
 
     # Make a corresponding id list.
     id_list[[i]] <- rep(as.numeric(row[,2]),length(name_list[[i]])) 
@@ -118,8 +118,8 @@ extract_possible_names <- function(data){
   return(names)
 }
 
-#rm(names)
-#names <- extract_possible_names(austen_text[1:30,])
+#rm(names1)
+#names1 <- extract_possible_names(austen_text)
 
 # Question 3 ------------------------------------------------------------------------------------------------------
 
@@ -192,4 +192,11 @@ count_names_per_book <- function(data, names){
 }
 
 #count_names_per_book(austen_text, filtered_names)
+
+
+
+names <- arrange(names, text_id) 
+names <- names %>% rename(new_unique = "id")
+test2 <- cbind(head(names,100000), head(names1,100000)) %>% 
+  filter(text_id == 16345)
 
