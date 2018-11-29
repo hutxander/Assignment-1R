@@ -108,10 +108,15 @@ extract_possible_names <- function(data){
   
   # Add the third column to the return: unique id for each name.
   names <- left_join(names, unique, by = c("name"))
+  
+  # Set factors to chr and int.
+  names[,1] <-  as.character(levels(names[,1]))[names[,1]]
+  names[,2] <-  as.integer(levels(names[,2]))[names[,2]]
+  return(names)
 }
 
-#rm(test)
-test <- extract_possible_names(austen_text[16:30,])
+
+#names <- extract_possible_names(austen_text)
 
 
 # Question 3 ------------------------------------------------------------------------------------------------------
@@ -125,29 +130,31 @@ test <- extract_possible_names(austen_text[16:30,])
 filter_names <- function(names){
   # Load data frequency provided
   freq <- read_rds("austen_word_freqs.Rds")
-  test_freq <- head(freq, 50)
   
   # Make frequencies found based on question 2 data.
   help_filter <- names %>% 
     group_by(name) %>% 
-    summarize(capital_freq = count(n)) 
+    summarize(
+      capital_freq = n()
+    ) 
   
   # Add just computed frequencies and provided frequencies to the data frame,
   #   then compute the proportion, if this is larger than 0.75: retain.
   #   Finally, delete the columns added to come back to the same format as in 2.
   filtered_names <- names %>% 
-    left_join(select(data = help_filter, name, capital_freq) , by = c("name")) %>% 
+    left_join(help_filter, by = c("name")) %>% 
     left_join(freq, by = c("name" = "word")) %>% 
-    mutate(capital_proportion = capital_freq / freq) %>% 
+    mutate(capital_proportion = capital_freq / count) %>% 
     filter(capital_proportion >= 0.75) %>% 
     mutate(
       capital_proportion = NULL,
       capital_freq = NULL,
-      freq = NULL
+      count = NULL
     )
+  
 }
 
-#test_filter <- filter_names(test)
+#filtered_names <- filter_names(names)
 
 # Question 4 ------------------------------------------------------------------------------------------------------
 
@@ -170,7 +177,6 @@ count_names_per_book <- function(data, filtered_names){
     arrange(max_id)
 
   data_needed <- austen_text %>% select(id, title)
-  test[,2] <-  as.integer(levels(test[,2]))[test[,2]]
   test_specifics <- left_join(test, austen_text %>% select(id, title),
                               by = c("text_id" = "id"))
   
