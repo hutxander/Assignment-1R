@@ -70,7 +70,7 @@ get_jane_austen_data <- function(){
   assign("austen_text", austen_text, envir=.GlobalEnv)
   invisible()
 }
-get_jane_austen_data()
+#get_jane_austen_data()
 
 #' Extract possible names
 #' 
@@ -118,8 +118,7 @@ extract_possible_names <- function(data){
   return(names)
 }
 
-#rm(names1)
-#names1 <- extract_possible_names(austen_text)
+#names <- extract_possible_names(head(austen_text,100))
 
 # Question 3 ------------------------------------------------------------------------------------------------------
 
@@ -136,9 +135,7 @@ filter_names <- function(names){
   # Make frequencies found based on question 2 data.
   help_filter <- names %>% 
     group_by(name) %>% 
-    summarize(
-      capital_freq = n()
-    ) 
+    summarize(capital_freq = n()) 
   
   # Add just computed frequencies and provided frequencies to the data frame,
   #   then compute the proportion, if this is larger than 0.75: retain.
@@ -148,11 +145,7 @@ filter_names <- function(names){
     left_join(freq, by = c("name" = "word")) %>% 
     mutate(capital_proportion = capital_freq / count) %>% 
     filter(capital_proportion >= 0.75) %>% 
-    mutate(
-      capital_proportion = NULL,
-      capital_freq = NULL,
-      count = NULL
-    )
+    mutate(capital_proportion = NULL, capital_freq = NULL, count = NULL)
   
 }
 
@@ -169,34 +162,18 @@ filter_names <- function(names){
 #' @return A data frame with columns book title, 
 #'   number of unique names, and total name occurences.
 count_names_per_book <- function(data, names){
-  
-  # Use the data to separate the filtered_names frame into unique books (third column)
-  # Within each book: sum filtered names and again add frequency of name and count these as well
-  rm(book_specific)
-  book_specific <- austen_text %>% 
-    group_by(title) %>% 
-    summarize(max_id = max(id)) %>% 
-    arrange(max_id)
 
-  data_needed <- austen_text %>% select(id, title)
-  test_specifics <- left_join(test, austen_text %>% select(id, title),
+  # Add titles to each name in names.
+  names_title <- left_join(names, data %>% select(id, title),
                               by = c("text_id" = "id"))
   
-  test_specific2 <- test_specifics %>% 
+  # Group by title, which is just added.
+  # Then, in each group, find unique names and total names (sum)
+  count_per_book <- names_title %>% 
     group_by(title) %>% 
-    summarize(
-      unique_names = ncol(as.data.frame(unique(name))),
-      name_occurrences = count(name)
-    )
+    summarize(unique_names = length(unique(name)), name_occurrences = n())
 
 }
 
-#count_names_per_book(austen_text, filtered_names)
-
-
-
-names <- arrange(names, text_id) 
-names <- names %>% rename(new_unique = "id")
-test2 <- cbind(head(names,100000), head(names1,100000)) %>% 
-  filter(text_id == 16345)
+#counted_names <- count_names_per_book(austen_text, names)
 
