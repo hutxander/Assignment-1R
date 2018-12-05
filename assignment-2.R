@@ -70,7 +70,7 @@ get_jane_austen_data <- function(){
   assign("austen_text", austen_text, envir=.GlobalEnv)
   invisible()
 }
-#get_jane_austen_data()
+get_jane_austen_data()
 
 #' Extract possible names
 #' 
@@ -90,6 +90,7 @@ extract_possible_names <- function(data){
     row <- data[i,] %>% select(text, id)
     
     # Extract al words that start with a capital in a single row. Simplify to get matrix.
+    # Use [[:alpha:]] instead of [a-zA-Z] to avoid matching other things like _
     name_list[[i]] <- tolower(str_extract_all(row[,1],'[A-Z]([[:alpha:]]*)', simplify = TRUE))
 
     # Make a corresponding id list.
@@ -118,7 +119,7 @@ extract_possible_names <- function(data){
   return(names)
 }
 
-#names <- extract_possible_names(head(austen_text,100))
+#names <- extract_possible_names(austen_text)
 
 # Question 3 ------------------------------------------------------------------------------------------------------
 
@@ -176,4 +177,3 @@ count_names_per_book <- function(data, names){
 }
 
 #counted_names <- count_names_per_book(austen_text, names)
-
