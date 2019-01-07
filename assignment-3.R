@@ -35,11 +35,11 @@ get_population_ranking <- function(){
 
   data_countries <- rename(data_countries, population = "value", rank.population = "rank")
   adjusted_links <- data_countries %>% select(country_link) %>% as.matrix() %>% str_extract("g.*")  
-  data_countries %>% mutate(country_link = adjusted_links)
+  data_countries <- mutate(data_countries, country_link = adjusted_links)
 }
 
 scraped_data <- get_population_ranking()
-
+#is.data.frame(scraped_data)
 
 #' Question 2: Retrieve Land Area
 #'
@@ -50,14 +50,35 @@ scraped_data <- get_population_ranking()
 #'
 #' @examples
 get_land_area <- function(country_link){
+  #country_link <- head(country_link, 10)
+  nrow(country_link)
   xpath <- str_c("//div[@id='","field-area","']/div[",2,"]/span[2]")
   #download the file from country_link and execute the xpath query
-  url = str_c(base_url, as.matrix(country_link))
-  url
+  land_area = country_link[FALSE]
+  for(i in 1:length(country_link)){
+    url = str_c(base_url, as.matrix(country_link)[i])
+    raw_html <- read_html(getURL(url, .encoding = "UTF-8"))
+    land_area[i] <- raw_html %>% xml_find_all(xpath) %>%
+      as_list() %>% unlist()
+  }
+  
+  return(land_area)
 }
-country_link <- scraped_data %>% select(country_link)
-land_area <- get_land_area(head(country_link, 10))
-land_area
+
+#note, this is done because of ambiguity in the assignment.
+#in the code provided to us, a comment in Question 1 implies that scraped_data should be a data frame.
+#however, in the assignment question 2, country link should be a character vector (and not a data frame column)
+#thus, scraped data is made into a matrix to get country link equal to a character vector.
+scraped_data <- as.matrix(scraped_data)
+country_link <- scraped_data[,1]
+#is.character(country_link)
+#is.vector(country_link)
+
+#country_link <- scraped_data %>% select(country_link)# %>% as.vector()
+land_area <- get_land_area(country_link[2:6])
+#is.character(land_area)
+#is.vector(land_area)
+
 #' Question 3: Get Population Density
 #'
 #' @return
