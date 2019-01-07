@@ -22,11 +22,11 @@ get_population_ranking <- function(){
   
   for(i in 1:length(xpath_expressions)){
     column = raw_html %>% xml_find_all(xpath_expressions[i]) %>%
-      as_list() %>% unlist() #%>% str_c(collapse=" ")
+      as_list() %>% unlist() 
     if(i == 1) {
-      data_countries <- column #as.data.frame(column)
+      data_countries <- column 
     } else {
-      data_countries <- cbind(data_countries, column)#as.data.frame(column))
+      data_countries <- cbind(data_countries, column)
     }
   }
   colnames(data_countries) = names(xpath_expressions)
@@ -54,8 +54,6 @@ scraped_data <- get_population_ranking()
 #'
 #' @examples
 get_land_area <- function(country_link){
-  #country_link <- head(country_link, 10)
-  nrow(country_link)
   xpath <- str_c("//div[@id='","field-area","']/div[",2,"]/span[2]")
   #download the file from country_link and execute the xpath query
   land_area = country_link[FALSE]
@@ -151,8 +149,31 @@ get_ranking <- function(url = "fields/335rank.html", characteristic = "populatio
                          "country" = "//td[@class='region']/a",
                          "value" = "//tr/td[3]",
                          "rank" = "//tr/td[1]")
-  #...
+  url_characteristic = str_c(base_url, url)
+  #download url and execute all XPath queries which will each return a column for a data_frame
+  raw_html <- read_html(getURL(url_characteristic, .encoding = "UTF-8"))
+  
+  for(i in 1:length(xpath_expressions)){
+    column = raw_html %>% xml_find_all(xpath_expressions[i]) %>%
+      as_list() %>% unlist()
+    if(i == 1) {
+      data_countries <- column 
+    } else {
+      data_countries <- cbind(data_countries, column)
+    }
+  }
+  colnames(data_countries) = names(xpath_expressions)
+  data_countries <- as.data.frame(data_countries)
+  
+  #make the necessary adjustments to the data frame as given by the assignment
+  
+  data_countries <- rename(data_countries, !!characteristic:= "value", !!str_c("rank.", characteristic):= "rank")
+  adjusted_links <- data_countries %>% select(country_link) %>% as.matrix() %>% str_extract("g.*")  
+  data_countries <- mutate(data_countries, country_link = adjusted_links)
+  
 }
+
+scraped_ranking <- get_ranking(url = "fields/279rank.html", characteristic = "area")
 
 #' Question 5 - Part 2: Get Country Characteristic
 #'
@@ -166,8 +187,20 @@ get_ranking <- function(url = "fields/335rank.html", characteristic = "populatio
 #' @examples
 get_country_characteristic <- function(country_link, xpath_field_id = "field-area", item = 2){
   #update the xpath and use similar code other than that
+  xpath <- str_c("//div[@id='",xpath_field_id,"']/div[",item,"]/span[2]")
+  #download the file from country_link and execute the xpath query
+  characteristic_value = country_link[FALSE]
+  for(i in 1:length(country_link)){
+    url = str_c(base_url, as.matrix(country_link)[i])
+    raw_html <- read_html(getURL(url, .encoding = "UTF-8"))
+    characteristic_value[i] <- raw_html %>% xml_find_all(xpath) %>%
+      as_list() %>% unlist()
+  }
+  
+  return(characteristic_value)
 }
 
+characteristic2 <- get_country_characteristic(country_link[2:6], xpath_field_id = "field-area", item = 2)
 
 # Question 6 --------------------------------------------------------------
 #' Question 6: Combine Rankings
@@ -181,6 +214,7 @@ get_country_characteristic <- function(country_link, xpath_field_id = "field-are
 combine_rankings <- function(rankings){
   
 }
-
+rankings[1:3, 1:2]
+combined_rankings <- combine_rankings(rankings[1:3, 1:2])
 
 
