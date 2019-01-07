@@ -17,25 +17,47 @@ get_population_ranking <- function(){
                          "rank" = "//tr/td[1]")
   url = str_c(base_url, "fields/335rank.html")
   #download url and execute all XPath queries which will each return a column for a data_frame
+  raw_html <- read_html(getURL(url, .encoding = "UTF-8"))
+  
+  for(i in 1:length(xpath_expressions)){
+    column = raw_html %>% xml_find_all(xpath_expressions[i]) %>%
+      as_list() %>% unlist() #%>% str_c(collapse=" ")
+    if(i == 1) {
+      data_countries <- column #as.data.frame(column)
+    } else {
+      data_countries <- cbind(data_countries, column)#as.data.frame(column))
+    }
+  }
+  colnames(data_countries) = names(xpath_expressions)
+  data_countries <- as.data.frame(data_countries)
   
   #make the necessary adjustments to the data frame as given by the assignment
+
+  data_countries <- rename(data_countries, population = "value", rank.population = "rank")
+  adjusted_links <- data_countries %>% select(country_link) %>% as.matrix() %>% str_extract("g.*")  
+  data_countries %>% mutate(country_link = adjusted_links)
 }
+
+scraped_data <- get_population_ranking()
 
 
 #' Question 2: Retrieve Land Area
 #'
 #' @param country_link A character vector of one or more country_link urls
 #'
-#' @return
+#' @return 
 #' @export
 #'
 #' @examples
 get_land_area <- function(country_link){
   xpath <- str_c("//div[@id='","field-area","']/div[",2,"]/span[2]")
   #download the file from country_link and execute the xpath query
+  url = str_c(base_url, as.matrix(country_link))
+  url
 }
-
-
+country_link <- scraped_data %>% select(country_link)
+land_area <- get_land_area(head(country_link, 10))
+land_area
 #' Question 3: Get Population Density
 #'
 #' @return
