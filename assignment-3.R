@@ -4,6 +4,7 @@ library(RCurl)
 base_url <- "https://www.cia.gov/library/publications/the-world-factbook/"
 
 
+# Question 1 --------------------------------------------------------------
 #' Question 1: Get Population Ranking
 #'
 #' @return
@@ -41,6 +42,9 @@ get_population_ranking <- function(){
 scraped_data <- get_population_ranking()
 #is.data.frame(scraped_data)
 
+
+
+# Question 2 --------------------------------------------------------------
 #' Question 2: Retrieve Land Area
 #'
 #' @param country_link A character vector of one or more country_link urls
@@ -69,16 +73,16 @@ get_land_area <- function(country_link){
 #in the code provided to us, a comment in Question 1 implies that scraped_data should be a data frame.
 #however, in the assignment question 2, country link should be a character vector (and not a data frame column)
 #thus, scraped data is made into a matrix to get country link equal to a character vector.
-scraped_data <- as.matrix(scraped_data)
-country_link <- scraped_data[,1]
-#is.character(country_link)
-#is.vector(country_link)
+country_link <- as.matrix(scraped_data)[,1]
+is.character(country_link)
+is.vector(country_link)
 
-#country_link <- scraped_data %>% select(country_link)# %>% as.vector()
 land_area <- get_land_area(country_link[2:6])
-#is.character(land_area)
-#is.vector(land_area)
+is.character(land_area)
+is.vector(land_area)
 
+
+# Question 3 --------------------------------------------------------------
 #' Question 3: Get Population Density
 #'
 #' @return
@@ -86,10 +90,27 @@ land_area <- get_land_area(country_link[2:6])
 #'
 #' @examples
 get_population_density <- function(){
+  #get information we need
+  scraped_data <- get_population_ranking()
+  country_link <- as.matrix(scraped_data)[,1]
+  land_area <- get_land_area(country_link)
+  country_data <- cbind(scraped_data, land_area)
+  
+  #adjust data format, add population_density
+  as.numeric(as.matrix(scraped_data)[,3])
+  test <- as.matrix(scraped_data)[,3]
+  is.character(test)
+  is.vector(test)
+  test2 <- factor(test)
+  as.numeric(factor(test))
+  country_data <- mutate(country_data, population = as.integer(population))
   
 }
 
+density_data <- get_population_density()
 
+
+# Question 4 --------------------------------------------------------------
 #' Question 4: Get All Provided Rankings
 #'
 #' @return
@@ -100,10 +121,22 @@ get_rankings <- function(){
   url <- "https://www.cia.gov/library/publications/the-world-factbook/docs/rankorderguide.html"
   xpath <- c("characteristic" = "//div[@class='field_label']/strong/a",
              "characteristic_link" = "//div[@class='field_label']/strong/a/@href")
-  #...
+  
+  raw_html <- read_html(getURL(url, .encoding = "UTF-8"))
+  characteristic <- raw_html %>% xml_find_all(xpath[1]) %>%
+    as_list() %>% unlist()
+  characteristic <- tolower(characteristic %>% str_extract("[^:]*"))
+
+  characteristic_link <- raw_html %>% xml_find_all(xpath[2]) %>%
+    as_list() %>% unlist()
+  characteristic_link <- characteristic_link %>% str_extract("f.*") 
+  
+  return(cbind(characteristic, characteristic_link))
 }
 
+rankings <- get_rankings()
 
+# Question 5 --------------------------------------------------------------
 #' Question 5 - Part 1: Get Ranking
 #'
 #' @param url The url of the ranking
@@ -136,6 +169,7 @@ get_country_characteristic <- function(country_link, xpath_field_id = "field-are
 }
 
 
+# Question 6 --------------------------------------------------------------
 #' Question 6: Combine Rankings
 #'
 #' @param rankings Rankings from get_rankings (or a selection thereof)
