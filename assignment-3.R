@@ -211,10 +211,22 @@ characteristic2 <- get_country_characteristic(country_link[2:6], xpath_field_id 
 #' @export
 #'
 #' @examples
+#' 
+#' 
+#' Issues with this one
 combine_rankings <- function(rankings){
-  
+  rankings <- rankings[1:3, 1:2]
+  for(i in 1:nrow(rankings)){
+    new_ranking <- get_ranking(url = rankings[i,2], characteristic = rankings[i,1])
+    if(i==1){
+      combined_rankings = new_ranking
+    } else {  
+      combined_rankings = full_join(combined_rankings, new_ranking, by = c("country_link"))
+    }
+  }
 }
-rankings[1:3, 1:2]
-combined_rankings <- combine_rankings(rankings[1:3, 1:2])
+nrow(rankings[1:3, 1:2])
+rm(combined_rankings)
+combined_rankings <- combine_rankings(rankings = rankings[1:3, 1:2])
 
 
