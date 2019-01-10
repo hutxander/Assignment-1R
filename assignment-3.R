@@ -7,7 +7,7 @@ base_url <- "https://www.cia.gov/library/publications/the-world-factbook/"
 # Question 1 --------------------------------------------------------------
 #' Question 1: Get Population Ranking
 #'
-#' @return
+#' @return data_countries, data frame which includes country_link, country, population and rank.population for all countries wiht a known population
 #' @export
 #'
 #' @examples
@@ -31,9 +31,12 @@ get_population_ranking <- function(){
   }
 
   #make the necessary adjustments to the data frame as given by the assignment
+  #change "../" to ""
   data_countries[,1] <- gsub("\\.\\./", "", data_countries[,1])
+  #make data frame as suggested by comment included
   data_countries <- as.tibble(data_countries)
-
+  
+  #renaming
   colnames(data_countries) = names(xpath_expressions)
   data_countries <- rename(data_countries, population = "value", rank.population = "rank")
 
@@ -48,7 +51,7 @@ is.data.frame(scraped_data)
 #'
 #' @param country_link A character vector of one or more country_link urls
 #'
-#' @return 
+#' @return land_area - A character vector of the same size as input country_link, with land area of corresponding country.
 #' @export
 #'
 #' @examples
@@ -83,8 +86,10 @@ is.vector(land_area)
 
 # Question 3 --------------------------------------------------------------
 #' Question 3: Get Population Density
+#' We use the previous two functions within this one to get the population and land_area.
+#' Data is changed to numerics where needed, and pop density is added.
 #'
-#' @return
+#' @return country_data, data frame with columns for country link, country, population, population rank, land area and pop density.
 #' @export
 #'
 #' @examples
@@ -122,8 +127,9 @@ density_data <- get_population_density()
 
 # Question 4 --------------------------------------------------------------
 #' Question 4: Get All Provided Rankings
+#' Downloads all the available rankings in the world factbook
 #'
-#' @return
+#' @return rankings, a two chr columns which have characteristics and corresponding links.
 #' @export
 #'
 #' @examples
@@ -141,7 +147,8 @@ get_rankings <- function(){
     as_list() %>% unlist()
   characteristic_link <- gsub("\\.\\./", "", characteristic_link) 
   
-  return(cbind(characteristic, characteristic_link))
+  rankings <- cbind(characteristic, characteristic_link)
+  return(rankings)
 }
 
 rankings <- get_rankings()
@@ -152,7 +159,7 @@ rankings <- get_rankings()
 #' @param url The url of the ranking
 #' @param characteristic What this ranking is about
 #'
-#' @return
+#' @return data_countries - data frame that includes the country link, country, characteristic value and its rank.
 #' @export
 #'
 #' @examples
@@ -194,12 +201,12 @@ scraped_ranking <- get_ranking(url = "fields/279rank.html", characteristic = "ar
 #' The issue is that the span isn't constant for all characteristics (e.g. span = 1 is needed for population, 2 for area, etc).
 #' There is no direct link between the two: item input cannot be used for span as well, see example below with characteristic2 where span != item.
 #'
-#' @param country_link 
-#' @param xpath_field_id 
-#' @param item 
-#' @param span
+#' @param country_link A character vector of one or more country_link urls
+#' @param xpath_field_id string - field id for characteristic
+#' @param item integer, number of subfield in characteristic (e.g. 1, 2, 3 for total, male, female median age)
+#' @param span integer, data location from left to right 
 #'
-#' @return
+#' @return characteristic_value, a character vector of the size of country_link, which contains the characteristic values per country.
 #' @export
 #'
 #' @examples
@@ -229,7 +236,7 @@ rm(characteristic1, characteristic2, characteristic3)
 #'
 #' @param rankings Rankings from get_rankings (or a selection thereof)
 #'
-#' @return
+#' @return combined_rankings, data frame with all the rankings and the corresponding ranks combined.
 #' @export
 #'
 #' @examples
