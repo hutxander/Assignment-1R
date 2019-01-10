@@ -233,8 +233,6 @@ rm(characteristic1, characteristic2, characteristic3)
 #' @export
 #'
 #' @examples
-#' 
-#' 
 combine_rankings <- function(rankings){
   #rankings <- rankings[1:3, 1:2]
   for(i in 1:nrow(rankings)){
@@ -245,9 +243,7 @@ combine_rankings <- function(rankings){
       combined_rankings = full_join(combined_rankings, new_ranking, by = c("country_link", "country"))
     }
   }
+  return(combined_rankings)
 }
-nrow(rankings[1:3, 1:2])
-rm(combined_rankings)
-combined_rankings <- combine_rankings(rankings[1:3, 1:2])
 
-
+combined_rankings <- combine_rankings(rankings)
