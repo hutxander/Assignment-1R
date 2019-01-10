@@ -78,9 +78,11 @@ country_link <- as.matrix(scraped_data)[,1]
 is.character(country_link)
 is.vector(country_link)
 
-land_area <- get_land_area(country_link[2:6])
+land_area <- get_land_area(country_link) #[1:5])
 is.character(land_area)
 is.vector(land_area)
+#land_area_total <- land_area
+#land_area <- land_area_total
 
 
 # Question 3 --------------------------------------------------------------
@@ -95,19 +97,27 @@ get_population_density <- function(){
   scraped_data <- get_population_ranking()
   country_link <- as.matrix(scraped_data)[,1]
   land_area <- get_land_area(country_link)
+  
+  #adjust land area data format
+  #note: data format for scraped_data is already done in Q1, 
+  #I only noticed later on that this should be done here. 
+  #however, I assume it is sufficient to leave it in Q1, 
+  #as this is a similar demonstration of programming skills as when I would have included it here.
+  
+  land_area <- gsub(",", "", land_area)
+  land_area <- gsub(" ", "", land_area)
+  land_area <- gsub("sqkm", "", land_area)
+  land_area <- gsub("million","000000", land_area)
+  land_area <- as.numeric(land_area)
   country_data <- cbind(scraped_data, land_area)
   
   #adjust data format, add population_density
-  as.numeric(as.matrix(scraped_data)[,3])
-  test <- as.matrix(scraped_data)[,3]
-  is.character(test)
-  is.vector(test)
-  test2 <- factor(test)
-  as.numeric(factor(test))
-  country_data <- mutate(country_data, population = as.integer(population))
-  
+  country_data <- mutate(country_data, population_density = population / land_area)
 }
 
+#note, while running this function I get a warming message:
+#in get_population_density(): NAs introduced by coercion.
+#however, the output does not contain NAs - it looks fine - I am unsure what goes wrong here.
 density_data <- get_population_density()
 
 
