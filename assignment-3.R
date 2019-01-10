@@ -29,19 +29,22 @@ get_population_ranking <- function(){
       data_countries <- cbind(data_countries, column)
     }
   }
-  colnames(data_countries) = names(xpath_expressions)
-  data_countries <- as.data.frame(data_countries)
-  
-  #make the necessary adjustments to the data frame as given by the assignment
 
+  #make the necessary adjustments to the data frame as given by the assignment
+  data_countries[,1] <- gsub("\\.\\./", "", data_countries[,1])
+  data_countries[,3] <- gsub(",", "", data_countries[,3])
+  data_countries <- as.tibble(data_countries)
+  data_countries[[3]] <- as.numeric(data_countries[[3]])
+  data_countries[[4]] <- as.numeric(data_countries[[4]])
+
+  colnames(data_countries) = names(xpath_expressions)
   data_countries <- rename(data_countries, population = "value", rank.population = "rank")
-  adjusted_links <- data_countries %>% select(country_link) %>% as.matrix() %>% str_extract("g.*")  
-  data_countries <- mutate(data_countries, country_link = adjusted_links)
+
+  return(data_countries)
 }
 
 scraped_data <- get_population_ranking()
-#is.data.frame(scraped_data)
-
+is.data.frame(scraped_data)
 
 
 # Question 2 --------------------------------------------------------------
