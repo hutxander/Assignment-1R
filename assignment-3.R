@@ -136,11 +136,11 @@ get_rankings <- function(){
   raw_html <- read_html(getURL(url, .encoding = "UTF-8"))
   characteristic <- raw_html %>% xml_find_all(xpath[1]) %>%
     as_list() %>% unlist()
-  characteristic <- tolower(characteristic %>% str_extract("[^:]*"))
+  characteristic <- tolower(gsub(":", "", characteristic))
 
   characteristic_link <- raw_html %>% xml_find_all(xpath[2]) %>%
     as_list() %>% unlist()
-  characteristic_link <- characteristic_link %>% str_extract("f.*") 
+  characteristic_link <- gsub("\\.\\./", "", characteristic_link) 
   
   return(cbind(characteristic, characteristic_link))
 }
